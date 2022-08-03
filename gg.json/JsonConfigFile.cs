@@ -8,7 +8,7 @@ namespace gg.json
 {
     /// <summary>
     /// Methods to read a jsonconfig from file (json or xjsn).
-    /// (Attribution 2.0 Generic (CC BY 2.0))
+    /// (Released under the MIT License (C) 2022 PointlessPun)
     /// </summary>
     public static class JsonConfigFile
     {

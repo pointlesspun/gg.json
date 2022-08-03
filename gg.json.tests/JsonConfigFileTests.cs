@@ -195,6 +195,7 @@ namespace gg.json.tests
             Assert.IsTrue(dataObject.RevealSecretDescription == null);
         }
 
+#if DEBUG
         /// <summary>
         /// This demonstrates what happens if we're trying to automatically instantiate 
         /// an interface property. Which is to say: an exception will be thrown as 
@@ -204,12 +205,14 @@ namespace gg.json.tests
         [ExpectedException(typeof(JsonConfigException))]
         public void ReadXJsonObjectAttemptingToInstantiateAnInterfaceTest()
         {
+
             var heroAlias = (nameof(Hero), typeof(Hero));
             var citizenAlias = (nameof(Citizen), typeof(Citizen));
             var dataObject = JsonConfigFile.Read<Citizen>("data/objectWithInterface.xjsn", heroAlias, citizenAlias);
 
             Assert.Fail();
-        }
+    }
+#endif
 
         /// <summary>
         /// Read an object which explicitely specifies what object to instantiate for a property with an interface

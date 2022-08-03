@@ -3,7 +3,7 @@
 namespace gg.json
 {
     /// <summary>
-    /// (Attribution 2.0 Generic (CC BY 2.0))
+    /// (Released under the MIT License (C) 2022 PointlessPun)
     /// </summary>
     public class JsonConfigException : Exception
     {

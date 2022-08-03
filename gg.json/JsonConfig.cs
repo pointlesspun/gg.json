@@ -20,7 +20,7 @@ namespace gg.json
     ///   
     /// * For examples see the relevant documentation  
     /// 
-    /// (Attribution 2.0 Generic (CC BY 2.0))
+    /// (Released under the MIT License (C) 2022 PointlessPun)
     /// </summary>
     public static class JsonConfig
     {
