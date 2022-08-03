@@ -1,0 +1,9 @@
+// Example of an object which tries to instantiate property defined as an interface. This should cause an exception.
+
+"__type": "Citizen",
+"Name": "Bruce",
+"Age": 32,
+"AlterEgo": {
+	"name": "Batman",
+	"Age": 48
+}

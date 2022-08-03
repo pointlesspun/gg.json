@@ -1,0 +1,11 @@
+// this is some documentation
+
+"f1": "bar",
+"P1": 42,
+"TestObj:TestObject" : {
+    # also documentation
+    "f1": "xbarx",
+    "P1": -1
+}
+
+// last documentation

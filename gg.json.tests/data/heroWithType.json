@@ -1,0 +1,6 @@
+{
+	"__type": "gg.json.tests.JsonConfigFileTests+Hero, gg.json.tests, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null",
+
+	"Name": "James",
+	"Age": 43.1
+}

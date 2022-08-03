@@ -1,0 +1,13 @@
+{
+	"objectArray": [
+		1,
+		"two",
+		{
+			"__type": "Citizen",
+			"Name": "Three"
+		},
+		[ "four", 5.0 ]
+	],
+
+	"intArray: int[]": [ 0, 1, 2, 3 ]
+}

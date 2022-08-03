@@ -1,0 +1,9 @@
+{
+	"__type": "Hero",
+	"Name": "Robin",
+	"Age": 22,
+	"ReportsTo": {
+		"Name": "Batman",
+		"Age": 48
+	}
+}

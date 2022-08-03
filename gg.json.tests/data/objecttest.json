@@ -1,0 +1,5 @@
+{
+  "__type" : "TestObject",
+  "f1": "bar",
+  "P1": 42
+}

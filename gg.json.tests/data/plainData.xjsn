@@ -1,0 +1,9 @@
+// Example of an xjson format with simple data types.
+
+"positiveNumber": 42,
+"negativeNumber": -42,
+"positiveFraction": 42.42,
+"negativeFraction": -42.42,
+"booleanTrue": true,
+"booleanFalse": false,
+"string": "foo"

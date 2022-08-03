@@ -1,0 +1,9 @@
+// Example of an object which tries to define an interface-property using an explicit type. 
+
+"__type": "Citizen",
+"Name": "Bruce",
+"Age": 32,
+"AlterEgo: Hero": {
+	"Name": "Batman",
+	"Age": 48
+}

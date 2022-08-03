@@ -1,0 +1,8 @@
+{
+  "f1": "bar",
+  "P1": 42,
+  "TestObj:TestObject": {
+    "f1": "bar",
+    "P1": 42
+  }
+}
