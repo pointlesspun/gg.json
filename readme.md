@@ -1,7 +1,14 @@
-﻿# XJSN an Extensible Json Reader (v1.0)
+﻿# gg.json an Extensible Json Reader (v1.0)
 
-XJSN provides a fairly easy way to deserialize Json into C# classes, somewhat (if not entirely) similar to JsonConvert 
-in NewtonSoft's Json deserializer. This document attempts to outline the intended use of this tool in an not too incoherent manner.
+gg.json provides a fairly easy way to deserialize Json into C# classes, somewhat (if not entirely) similar to JsonConvert 
+in NewtonSoft's Json deserializer with a minor twist. This document attempts to outline the intended use of this tool in an not too incoherent manner.
+
+Install:
+```
+dotnet add package gg.json --version 1.0.2
+```
+
+Released under [the MIT License, (C)2022 PointlessPun ](https://opensource.org/licenses/MIT) 
 
 ## Key features
 
@@ -23,16 +30,15 @@ in NewtonSoft's Json deserializer. This document attempts to outline the intende
 
 ## Examples
 
-As the code changes quickly documentation has a tendency to become stale. Therefore it is recommended to refer to the integration tests 
-(link forthcoming) for the most up to date samples. 
+As the code changes quickly documentation has a tendency to become stale. Therefore it is recommended to refer to the [integration tests] (https://github.com/pointlesspun/gg.json/blob/master/gg.json.tests/JsonConfigFileTests.cs) for the most up to date samples. 
 
 That being said, let's get the basics out of the way and then let's get on with the actual examples. 
 
-The XJSN functionality comes by means of three (largely static) classes:
+The gg.json functionality comes by means of three (largely static) classes:
 
 * `JsonConfig` which provides various methods to deserialize `JsonElements` into `C#`.
 * `JsonConfig.Options` options with which the deserialization process is controlled.
-* `JsonConfigFile` builds upon `JsonConfig` and provides easy to use `.json` or `.xjsn` file reading.
+* `JsonConfigFile` builds upon `JsonConfig` and provides easy to use `.json` or `.gg.json` file reading.
 
 For the most part we will be using the `JsonConfigFile` class.
 
@@ -168,14 +174,14 @@ Now the careful reader may notice something interesting in the class definition 
 * The declaration of the AlterEgo property.
 * The instantiation of the right object corresponding to said declaration.
 
-IF you're only interested in using XSJN, the only thing you should know are the following:
+IF you're only interested in using gg.json, the only thing you should know are the following:
 
-* In order to specify the type of an object, XSJN checks if the type of the property is a concrete type (ie not an interface nor an abstract class).
-* If the property is not a concrete type, XSJN looks for the typename following a colon (':') the name declaration. In case of the previous json, you will find the type, `Hero`, after the property name `AlterEgo`, ie `"AlterEgo: Hero"`.
-* You can specify the concrete classes XSJN can use by adding 'options' to the read call, eg `JsonConfigFile.Read<Citizen>("bruce.json", new JsonConfig.Options()`), but more on this later.
-* If no options are provided, XSJN will create these options for you based on a reasonable guess of the concrete classes it might come across. This guess consists of a number of common default types (eg `int`, `float[]`, `ulong[]`) and public concrete types found in the assembly of the `Citizen` class. `Hero` is part of the latter, so XSJN knows how to create an object of type `Hero`.
+* In order to specify the type of an object, gg.json checks if the type of the property is a concrete type (ie not an interface nor an abstract class).
+* If the property is not a concrete type, gg.json looks for the typename following a colon (':') the name declaration. In case of the previous json, you will find the type, `Hero`, after the property name `AlterEgo`, ie `"AlterEgo: Hero"`.
+* You can specify the concrete classes gg.json can use by adding 'options' to the read call, eg `JsonConfigFile.Read<Citizen>("bruce.json", new JsonConfig.Options()`), but more on this later.
+* If no options are provided, gg.json will create these options for you based on a reasonable guess of the concrete classes it might come across. This guess consists of a number of common default types (eg `int`, `float[]`, `ulong[]`) and public concrete types found in the assembly of the `Citizen` class. `Hero` is part of the latter, so gg.json knows how to create an object of type `Hero`.
 
-If you're interested in other use cases, specifying the types or the limitations of XSJN read on...
+If you're interested in other use cases, specifying the types or the limitations of gg.json read on...
 
 ### Declaring types explicitly 
 
@@ -193,7 +199,7 @@ public void ReadPerson()
 }
 ```
 
-As you can see the object is cast to the `IPerson` interface. This would "normally" (for a given definition of normal) not be possible as the deserializer needs to know what type the json file needs to be converted to. XJSN however is on the lookup for a `__type` property. This property is a key/value (string) pair where the value is the type of the enclosing object. This type can be an assembly qualified type or a more readable 'alias'. Eg
+As you can see the object is cast to the `IPerson` interface. This would "normally" (for a given definition of normal) not be possible as the deserializer needs to know what type the json file needs to be converted to. gg.json however is on the lookup for a `__type` property. This property is a key/value (string) pair where the value is the type of the enclosing object. This type can be an assembly qualified type or a more readable 'alias'. Eg
 
 ```json
 {
@@ -203,7 +209,7 @@ As you can see the object is cast to the `IPerson` interface. This would "normal
 	"Age": 43.1
 }
 ```
-Note that while out of the box XJSN supports this approach, it is not by default enabled for security reasons. If you want to use fully qualified types to be read and instantiated, create custom options and set the `AllowFullyQualifiedTypes` property to true (at your own peril).
+Note that while out of the box gg.json supports this approach, it is not by default enabled for security reasons. If you want to use fully qualified types to be read and instantiated, create custom options and set the `AllowFullyQualifiedTypes` property to true (at your own peril).
 
 Another approach is to use a more readable Type alias:
 
