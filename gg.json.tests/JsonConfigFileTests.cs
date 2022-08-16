@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Collections.Generic;
 
 namespace gg.json.tests
 {
@@ -308,6 +309,23 @@ namespace gg.json.tests
 
             // should never get here
             Assert.Fail();
+        }
+
+        /// <summary>
+        /// Bare bones test to check if 
+        /// </summary>
+        [TestMethod]
+        public void LogTest()
+        {
+            var options = JsonConfig.Options.Create<Citizen>();
+            var logs = new List<string>();
+
+            options.Log = (str, lvl) => logs.Add(str);
+
+            var citizen = JsonConfigFile.Read<Citizen>("data/objectWithInterfaceFixed.json", options);
+
+            Assert.IsTrue(citizen != null);
+            Assert.IsTrue(logs.Count > 0);
         }
     }
 }

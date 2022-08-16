@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Text.Json;
 
 namespace gg.json
@@ -22,125 +21,8 @@ namespace gg.json
     /// 
     /// (Released under the MIT License (C) 2022 PointlessPun)
     /// </summary>
-    public static class JsonConfig
+    public static partial class JsonConfig
     {
-        /// <summary>
-        /// Options used when parsing a json config string.
-        /// </summary>
-        public class Options
-        {
-            /// <summary>
-            /// Shorthand / class aliases mapping to their respective Types.
-            /// </summary>
-            public Dictionary<string, Type> Aliases { get; set; }
-
-            /// <summary>
-            /// Tag used to identify an object type property in the json files.
-            /// </summary>
-            public string TypeTag { get; set; } = "__type";
-
-            /// <summary>
-            /// Character used to separate a property name from the type
-            /// </summary>
-            public char TypeSeparator { get; set; } = ':';
-
-            /// <summary>
-            /// Allow fully qualified types to create new instances (this being a security risk, is maybe
-            /// not something your want).
-            /// </summary>
-            public bool AllowFullyQualifiedTypes { get; set; } = false;
-
-            /// <summary>
-            /// Create new options and adds the given aliases.
-            /// </summary>
-            /// <param name="objectTypes"></param>
-            /// <returns></returns>
-            public static Options Create(params (string name, Type type)[] objectTypes)
-            {
-                var options = new Options
-                {
-                    Aliases = new Dictionary<string, Type>()
-                };
-
-                foreach (var (name, type) in objectTypes)
-                {
-                    options.Aliases[name] = type;
-                }
-
-                return options;
-            }
-
-            /// <summary>
-            /// Create new options and calls AddTypesInAssemby
-            /// </summary>
-            /// <param name="assembly"></param>
-            /// <returns></returns>
-            public static Options Create(Assembly assembly) =>
-                new Options()
-                {
-                    Aliases = new Dictionary<string, Type>()
-                }
-                .AddTypesInAssembly(assembly);
-            
-
-            /// <summary>
-            /// All public concrete types in the given assembly to the Aliases 
-            /// </summary>
-            /// <param name="assembly"></param>
-            /// <returns></returns>
-            public Options AddTypesInAssembly(Assembly assembly)
-            {
-                foreach (var type in assembly.DefinedTypes)
-                {
-                    // only add types which are public, concrete or pass the typefilter 
-                    if (!type.IsInterface
-                        && !type.IsAbstract
-                        && (type.IsPublic || type.IsNestedPublic))
-                    {
-                        Aliases[type.Name] = type;
-                    }
-                }
-
-                return this;
-            }
-
-            /// <summary>
-            /// Add all the basic types and their arrays
-            /// </summary>
-            /// <returns></returns>
-            public Options AddDefaultAliases()
-            {
-                if (Aliases == null)
-                {
-                    Aliases = new Dictionary<string, Type>();
-                }
-
-                Aliases["int"] = typeof(int);
-                Aliases["uint"] = typeof(uint);
-                Aliases["float"] = typeof(float);
-                Aliases["long"] = typeof(long);
-                Aliases["ulong"] = typeof(ulong);
-                Aliases["int[]"] = typeof(int[]);
-                Aliases["float[]"] = typeof(float[]);
-                Aliases["string[]"] = typeof(string[]);
-                Aliases["double[]"] = typeof(double[]);
-                Aliases["object[]"] = typeof(object[]);
-                Aliases["bool[]"] = typeof(bool[]);
-                Aliases["boolean[]"] = typeof(bool[]);
-                Aliases["uint[]"] = typeof(uint[]);
-                Aliases["long[]"] = typeof(long[]);
-                Aliases["ulong[]"] = typeof(ulong[]);
-
-                return this;
-            }
-
-            /// <summary>
-            /// Create new options and adds alias in the assembly of T.
-            /// </summary>
-            /// <typeparam name="T"></typeparam>
-            /// <returns></returns>
-            public static Options Create<T>() where T: class => Create(typeof(T).Assembly);
-        }
 
         #region --- Static Readonly Fields ----------------------------------------------------------------------------
 
@@ -190,6 +72,11 @@ namespace gg.json
         /// <returns></returns>
         public static object Deserialize(string jsonString, Type targetType = null, Options options = null)
         {
+            if (options != null)
+            {
+                options.TryLog($"Deserializing jsonString ... with target type {(targetType == null ? "null" : targetType.Name)}.");
+            }
+
             var element = JsonSerializer.Deserialize<JsonElement>(jsonString);
 
             // test if a version is present, if so validate it
@@ -197,7 +84,7 @@ namespace gg.json
             {
                 if (element.TryGetProperty(VersionTag, out var version))
                 {
-                    ValidateVersion(version.GetString());
+                    ValidateVersion(version.GetString(), options);
                 }
             }
 
@@ -503,7 +390,7 @@ namespace gg.json
                         var targetType = ResolveType(inlinedName.typeName, options);
                         object value = property.Value.MapToType(targetType, options);
 
-                        SetObjectProperty(instance, value, type, inlinedName.key);
+                        SetObjectProperty(instance, value, type, inlinedName.key, options);
                     }
                     else
                     {
@@ -521,9 +408,9 @@ namespace gg.json
                             {
                                 fieldInfo.SetValue(instance, property.Value.MapValueTo(fieldInfo.FieldType, options));
                             }
-                            else
+                            else if (options != null)
                             {
-                                Console.WriteLine("Warning could not resolve field with name: " + property.Name);
+                                options.TryLog($"Warning could not resolve field with name: {property.Name}", Options.LogLevel.Warning);
                             }
                         }
                     }
@@ -533,7 +420,7 @@ namespace gg.json
             return instance;
         }
 
-        private static void SetObjectProperty(object obj, object value, Type type, string propertyName)
+        private static void SetObjectProperty(object obj, object value, Type type, string propertyName, Options options = null)
         {
             var propertyInfo = type.GetProperty(propertyName);
 
@@ -549,9 +436,9 @@ namespace gg.json
                 {
                     fieldInfo.SetValue(obj, value);
                 }
-                else
+                else if (options != null)
                 {
-                    Console.WriteLine("Warning could not resolve property with name: " + propertyName);
+                    options.TryLog($"Warning could not resolve property with name: {propertyName}", Options.LogLevel.Warning);
                 }
             }
         }
@@ -585,7 +472,7 @@ namespace gg.json
         /// <param name="inputVersion"></param>
         /// <returns></returns>
         /// <exception cref="JsonConfigException"></exception>
-        private static bool ValidateVersion(string inputVersion)
+        private static bool ValidateVersion(string inputVersion, Options options = null)
         {
             var parts = inputVersion.Split('.');
 
@@ -593,12 +480,23 @@ namespace gg.json
             {
                 if (majorVersion > Version[0])
                 {
-                    throw new JsonConfigException($"Input document is a higher version {inputVersion} than the current version of this JsonConfig.");
+                    var message = $"Input document is a higher version {inputVersion} than the current version of this JsonConfig.";
+
+                    if (options != null)
+                    {
+                        options.TryLog(message, Options.LogLevel.Error);
+                    }
+
+                    throw new JsonConfigException(message);
                 }
                 return true;    
             }
 
-            Console.WriteLine($"Warning: cannot validate this version '${inputVersion}', may result in unexpected ... unexpectations. ");
+            if (options != null)
+            {
+                var warningMessage = $"Warning: cannot validate this version '${inputVersion}'. ";
+                options.TryLog(warningMessage, Options.LogLevel.Warning);
+            }
 
             return true;
         }

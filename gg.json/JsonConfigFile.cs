@@ -96,6 +96,7 @@ namespace gg.json
         /// <returns></returns>
         public static T ReadJsonConfig<T>(string fileName, JsonConfig.Options options)
         {
+            options.TryLog($"Reading config from {fileName}.");
             return JsonConfig.Deserialize<T>(File.ReadAllText(fileName), options);
         }
 
@@ -112,6 +113,8 @@ namespace gg.json
         /// <returns></returns>
         private static string TranscribeXJsn<T>(string fileName, JsonConfig.Options options)
         {
+            options.TryLog($"Reading & transcribing config from {fileName}.");
+            
             var lines = File.ReadAllLines(fileName).ToList();
             var hasTypeDefined = false;
             var statementCount = 0;
@@ -134,7 +137,8 @@ namespace gg.json
                     }
                     else 
                     {
-                        // something found, could be a json line
+                        // something found, could be a json line. This is used to dsetermine whether or
+                        // not we need to add a ',' at the end of the type 
                         statementCount++;
                     }
 
@@ -144,9 +148,10 @@ namespace gg.json
 
             lines.Insert(0, "{");
 
-            // insert a type line if no type has been defined and the user is asking for a specific type
+            // insert a type line if no type has been defined and the user is asking for a specific type via <T>
             if (typeof(T) != typeof(Dictionary<string, object>) && !hasTypeDefined)
             {
+                options.TryLog($"Adding {typeTag}: {typeof(T)}.");
                 lines.Insert(1, $"    \"{typeTag}\": \" {typeof(T).AssemblyQualifiedName}\"{(statementCount > 0 ? "," : "")}\n" );
             }
 
