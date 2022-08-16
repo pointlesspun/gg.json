@@ -1,11 +1,10 @@
-﻿# gg.json an Extensible Json Reader (v1.0)
+﻿# gg.json an Extensible Json Reader (v1.1)
 
-gg.json provides a fairly easy way to deserialize Json into C# classes, somewhat (if not entirely) similar to JsonConvert 
-in NewtonSoft's Json deserializer with a minor twist. This document attempts to outline the intended use of this tool in an not too incoherent manner.
+gg.json provides a fairly easy way to deserialize Json into C# classes, somewhat (if not entirely) similar to JsonConvert in NewtonSoft's Json deserializer with a minor twist. This document attempts to outline the intended use of this tool in a not too incoherent manner.
 
 Install:
 ```
-dotnet add package gg.json --version 1.0.2
+dotnet add package gg.json --version 1.1.0
 ```
 
 Released under [the MIT License, (C)2022 PointlessPun ](https://opensource.org/licenses/MIT) 
@@ -227,7 +226,7 @@ Another approach is to use a more readable Type alias:
 
 The use case for introducing a type inside the json file is to have fully selfcontained, self describing pieces of data. I'm not sure what the market for these types of data looks like but I'm just going to assume it's huge and profitable or if not there is some artistic benefit. In case you're wondering if this `__type` property shows up in your object somehow, don't worry: if XSJN can't find a property or field, or the property or field is not public it will be ignored.
 
-In general the expectation is that you'll want to use the aliased types, so let's look at setting up the options. XJSN offers various methods of creating some best guess default options and aliases out of the box, eg by giving one or more type tuples at the end of the `Read` method:
+In general the expectation is that you'll want to use the aliased types, so let's look at setting up the options. gg.json offers various methods of creating some best guess default options and aliases out of the box, eg by giving one or more type tuples at the end of the `Read` method:
 
 ```csharp
    var heroAlias = ("Hero", typeof(Hero));
@@ -253,13 +252,34 @@ If that is still not enough control, you can create Options, customize them to y
 
 There are a couple of features, quirks and details you should know about (eg `__version`) but if you came this far, you probably have an ok to good grasp on what's going on and can figure it out yourself.
 
+### Logging
+
+gg.json provides a minimal logging interface to track important and less important events. The `JsonConfig.Options` contains a property "Log" which is an Action taking a string (the log message) and "log level" (see `JsonConfig.Options.LogLevel`). By defining this Log Action, you can forward log messages to your log solution of choice (or leave it null). Do note the actual log messages provided by gg.json is minimal at the time of writing.
+
+example:
+
+```csharp
+public void LogDemonstration()
+{
+    var options = JsonConfig.Options.Create<Citizen>();
+    var logs = new List<string>();
+
+    options.Log = (str, lvl) => logs.Add(str);
+
+    var citizen = JsonConfigFile.Read<Citizen>("citizenFile.json", options);
+
+    // at this point the logs contains at least two strings of the LogLevel.Message type/
+    ...
+}
+```
+
+
 ## Background / Motivation
 
 (Insert a captivating story about my passion of working with json files, reinventing the wheel and the dismay of having to deal with the shortcomings of other json tools.)
 
 ## "Roadmap"
 
-* v1.1 - Adding support for error logging.
 * v2.0 - Support for Lists<>, HashSets<> and Dictionaries
 * v3.0 - References
 * v4.0 - Includes (Fetch)
