@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 
 namespace gg.json
@@ -291,6 +292,14 @@ namespace gg.json
             }
         }
 
+        /// <summary>
+        /// Map an (array) element to a collection of the given target type.
+        /// </summary>
+        /// <param name="element"></param>
+        /// <param name="targetType"></param>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        /// <exception cref="JsonConfigException"></exception>
         private static object MapToCollection(this JsonElement element, Type targetType, Options options = null)
         {
             
@@ -301,7 +310,7 @@ namespace gg.json
             }
             
             // if it's a list, build a list (generic or 'plain' (?)).
-            if (typeof(IList).IsAssignableFrom(targetType))
+            if (ImplementsCollection(targetType))
             {
                 if (targetType.IsGenericType)
                 {
@@ -319,6 +328,17 @@ namespace gg.json
             }
 
             throw new JsonConfigException($"Unknown or unhandled target type: {targetType.Name}");
+        }
+
+        /// <summary>
+        /// Checks if the type t implements ICollection or ICollection<>
+        /// </summary>
+        /// <param name="t"></param>
+        /// <returns></returns>
+        private static bool ImplementsCollection(Type t)
+        {
+            return typeof(ICollection).IsAssignableFrom(t)
+                || t.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ICollection<>));
         }
 
         /// <summary>

@@ -232,5 +232,19 @@ namespace gg.json.tests
             Assert.IsTrue(obj.GenericIntList.Count == 3);
             Assert.IsTrue(obj.arrayList.Count == 3);
         }
+
+        [TestMethod]
+        public void DeserializeTypedSetTest()
+        {
+            var outerJsonString = $"[1,2,3]";
+            var document = JsonSerializer.Deserialize<JsonElement>(outerJsonString);
+            var list = JsonConfig.MapToCollection<HashSet<int>>(document);
+
+            Assert.IsTrue(list != null);
+            Assert.IsTrue(list.Count == 3);
+            Assert.IsTrue(list.Contains(1));
+            Assert.IsTrue(list.Contains(2));
+            Assert.IsTrue(list.Contains(3));
+        }
     }
 }
