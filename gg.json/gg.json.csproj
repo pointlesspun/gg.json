@@ -9,7 +9,7 @@ in NewtonSoft's Json deserializer with a minor twist.</Description>
     <PackageReadmeFile>readme.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/pointlesspun/gg.json</RepositoryUrl>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <Version>1.1.0</Version>
+    <Version>2.0.0</Version>
     <Copyright>(C)2022 PointlessPun</Copyright>
   </PropertyGroup>
 
