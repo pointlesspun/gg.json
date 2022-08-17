@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text.Json;
 
@@ -47,7 +48,7 @@ namespace gg.json
         /// [0] => major version, breaking changes with lower versions
         /// [1] => minor version, no breaking changes with lower versions
         /// </summary>
-        public static readonly int[] Version = new int[] { 1, 0 };
+        public static readonly int[] Version = new int[] { 2, 0 };
 
         #endregion
 
@@ -126,6 +127,15 @@ namespace gg.json
         /// <returns>A non null array of size 0 or more.</returns>
         public static T[] MapToArray<T>(JsonElement element, Options options = null) 
                 => (T[]) element.MapToArray(typeof(T), options);
+
+        /// <summary>
+        /// Deserialize a json array to a collection of type T.
+        /// </summary>
+        /// <param name="element">A json element with valueKin JsonValueKind.Array.</param>
+        /// <param name="options">Optional argument with the deserialization options.</param>
+        /// <returns>A non null array of size 0 or more.</returns>
+        public static T MapToCollection<T>(JsonElement element, Options options = null)
+                => (T)element.MapToCollection(typeof(T), options);
 
         /// <summary>
         /// Deserialize an array made out of objects.
@@ -270,8 +280,8 @@ namespace gg.json
                     return true;
                 case JsonValueKind.False:
                     return false;
-                case JsonValueKind.Array:
-                    return element.MapToArray(targetType.GetElementType(), options);
+                case JsonValueKind.Array:                   
+                    return element.MapToCollection(targetType, options);
                 case JsonValueKind.Object:
                     return element.MapToType(targetType, options);
                 case JsonValueKind.Null:
@@ -279,6 +289,36 @@ namespace gg.json
                 default:
                     throw new JsonConfigException($"Unknown or unhandled element of type: {element.ValueKind}");
             }
+        }
+
+        private static object MapToCollection(this JsonElement element, Type targetType, Options options = null)
+        {
+            
+            // no targettype or we're working with an array, try to build an array
+            if (targetType == null || targetType.IsArray)
+            {
+                return element.MapToArray(targetType.GetElementType(), options);
+            }
+            
+            // if it's a list, build a list (generic or 'plain' (?)).
+            if (typeof(IList).IsAssignableFrom(targetType))
+            {
+                if (targetType.IsGenericType)
+                {
+                    var genericArgs = targetType.GetGenericArguments()[0];
+                    var genericType = targetType.GetGenericTypeDefinition();
+                    var instanceType = genericType.MakeGenericType(genericArgs);
+                    var args = element.MapToArray(genericArgs, options);
+                    return Activator.CreateInstance(instanceType, args);
+                }
+                else
+                {
+                    Array arrayValues = element.MapToObjectArray(options);
+                    return Activator.CreateInstance(targetType, arrayValues);
+                }
+            }
+
+            throw new JsonConfigException($"Unknown or unhandled target type: {targetType.Name}");
         }
 
         /// <summary>

@@ -1,6 +1,7 @@
 ﻿using gg.json;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
@@ -26,6 +27,12 @@ namespace gg.json.tests
         class TestArrayObj
         {
             public int[] array;
+        }
+
+        class TestListObj
+        {
+            public List<int> GenericIntList { get; set; }
+            public ArrayList arrayList;
         }
 
         private static readonly JsonConfig.Options TestOptions = new JsonConfig.Options()
@@ -63,8 +70,6 @@ namespace gg.json.tests
             Assert.IsTrue(value is bool);
             Assert.IsTrue((bool)value == true);
         }
-
-
 
         [TestMethod]
         public void DeserializeObjectTests()
@@ -183,6 +188,49 @@ namespace gg.json.tests
             Assert.IsTrue(obj != null);
             Assert.IsTrue(obj.P1 == 42);
             Assert.IsTrue(obj.f1 == "bar");
+        }
+
+        [TestMethod]
+        public void DeserializeUntypedListTest()
+        {
+            var outerJsonString = $"[1,2,3]";
+
+            var document = JsonSerializer.Deserialize<JsonElement>(outerJsonString);
+            var list = JsonConfig.MapToCollection<ArrayList>(document);
+
+            Assert.IsTrue(list != null);
+            Assert.IsTrue(list.Count == 3);
+            Assert.IsTrue(((double)list[0]) == 1);
+            Assert.IsTrue(((double)list[1]) == 2);
+            Assert.IsTrue(((double)list[2]) == 3);
+        }
+
+        [TestMethod]
+        public void DeserializeTypedListTest()
+        {
+            var outerJsonString = $"[1,2,3]";
+
+            var document = JsonSerializer.Deserialize<JsonElement>(outerJsonString);
+            var list = JsonConfig.MapToCollection<List<int>>(document);
+
+            Assert.IsTrue(list != null);
+            Assert.IsTrue(list.Count == 3);
+            Assert.IsTrue(list[0] == 1);
+            Assert.IsTrue(list[1] == 2);
+            Assert.IsTrue(list[2] == 3);
+        }
+
+        [TestMethod]
+        public void DeserializeObjectWithListAndArrayTest()
+        {
+            var outerJsonString = $"{{ \"GenericIntList\": [1,2,3], \"arrayList\": [1, \"foo\", [1,2,3]] }}";
+
+            var document = JsonSerializer.Deserialize<JsonElement>(outerJsonString);
+            var obj = JsonConfig.MapToType<TestListObj>(document);
+
+            Assert.IsTrue(obj != null);
+            Assert.IsTrue(obj.GenericIntList.Count == 3);
+            Assert.IsTrue(obj.arrayList.Count == 3);
         }
     }
 }
