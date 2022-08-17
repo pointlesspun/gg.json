@@ -185,13 +185,13 @@ namespace gg.json
             Requires(!(targetType.IsInterface || targetType.IsAbstract),
                 $"Cannot instantiate an interface of type {targetType.Name}, use either an explicit typename or an alias (eg \"MyProperty:Alias\").");
 
-            if (element.ValueKind == JsonValueKind.Array)
+            if (typeof(IDictionary).IsAssignableFrom(targetType))
             {
-                return element.MapToArray(targetType.GetElementType(), options);
+                return MapToIDictionary(element, targetType.GenericTypeArguments[0], targetType.GenericTypeArguments[1], options);
             }
-            else if (typeof(IDictionary).IsAssignableFrom(targetType))
+            else if (typeof(ICollection).IsAssignableFrom(targetType))
             {
-                return MapToIDictionary(element, targetType.GenericTypeArguments[0], targetType.GenericTypeArguments[1]);
+                return MapToCollection(element, targetType, options);
             }
 
             return SetObjectProperties(Activator.CreateInstance(targetType), element.EnumerateObject(), options);
