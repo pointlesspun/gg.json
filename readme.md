@@ -1,10 +1,10 @@
-﻿# gg.json an Extensible Json Reader (v1.1)
+﻿# gg.json an Extensible Json Reader (v2.0)
 
 gg.json provides a fairly easy way to deserialize Json into C# classes, somewhat (if not entirely) similar to JsonConvert in NewtonSoft's Json deserializer with a minor twist. This document attempts to outline the intended use of this tool in a not too incoherent manner.
 
 Install:
 ```
-dotnet add package gg.json --version 1.1.0
+dotnet add package gg.json --version 2.0.0
 ```
 
 Released under [the MIT License, (C)2022 PointlessPun ](https://opensource.org/licenses/MIT) 
@@ -21,7 +21,7 @@ Released under [the MIT License, (C)2022 PointlessPun ](https://opensource.org/l
 ## Limitations
 
 * No references to other objects. Properties which refer to objects are always owned by the declaring class.
-* Limited collection support: array types & dictionaries are the only collections supported (Lists, Sets will come soon).
+* Limited collection support: array types, dictionaries, ICollections (Lists, Sets) are the only collections supported.
 * Not very informative error messages, in case of an errors.
 * Objects must have a default / parameter less constructor.
 * Security risk: objects will be instantiated, i.e. code will be invoked and run to moment a json file is read. Make sure
@@ -273,14 +273,12 @@ public void LogDemonstration()
 }
 ```
 
-
 ## Background / Motivation
 
 (Insert a captivating story about my passion of working with json files, reinventing the wheel and the dismay of having to deal with the shortcomings of other json tools.)
 
 ## "Roadmap"
 
-* v2.0 - Support for Lists<>, HashSets<> and Dictionaries
 * v3.0 - References
 * v4.0 - Includes (Fetch)
 
