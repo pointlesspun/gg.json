@@ -189,36 +189,56 @@ namespace gg.json
             {
                 return element.MapToArray(targetType.GetElementType(), options);
             }
+            else if (typeof(IDictionary).IsAssignableFrom(targetType))
+            {
+                return MapToIDictionary(element, targetType.GenericTypeArguments[0], targetType.GenericTypeArguments[1]);
+            }
 
             return SetObjectProperties(Activator.CreateInstance(targetType), element.EnumerateObject(), options);
         }
 
         /// <summary>
-        /// Maps the given element to an string / object dictionary.
+        /// Maps the given element to an dictionary of TKey, TValue pairs. Note that TKey can only be string, int, or long.
         /// </summary>
         /// <param name="element"></param>
         /// <param name="options"></param>
         /// <returns></returns>
-        public static Dictionary<string, object> MapToDictionary(this JsonElement element, Options options = null)
-        {
-            RequiresValueKind(element, JsonValueKind.Object,
-                                    "When mapping to a dictionary, the element must be of JsonValueKind.Object.");
+        public static Dictionary<TKey, TValue> MapToDictionary<TKey, TValue>(this JsonElement element, Options options = null)
+        {            
+            return (Dictionary<TKey, TValue>) MapToIDictionary(element, typeof(TKey), typeof(TValue), options);
+        }
 
-            var result = new Dictionary<string, object>();
+        public static IDictionary MapToIDictionary(this JsonElement element, Type keyType, Type valueType, Options options = null)
+        {        
+            RequiresValueKind(element, JsonValueKind.Object,
+                                    "When mapping to a typed  dictionary, the element must be of JsonValueKind.Object.");
+            Requires(keyType == typeof(int) || keyType == typeof(string) || keyType == typeof(long),
+                                    "When mapping to a typed dictionary, the key must be either an int or .");
+
+            var result = (IDictionary)Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(keyType, valueType));
+            var keyParser = GetKeyParser(keyType);
             var splitChar = options == null ? DefaultTypeSeparator : options.TypeSeparator;
 
             foreach (var keyValuePair in element.EnumerateObject())
             {
-                // check if this is property with a defined type
-                if (TrySplitNameAndType(keyValuePair.Name, splitChar,out (string key, string typeName) inlinedName))
+                // if the valuetype is object, it's basically stating that the actual type needs to be figured out
+                if (valueType == typeof(object))
                 {
-                    var type = ResolveType(inlinedName.typeName, options);
-                    result[inlinedName.key] = keyValuePair.Value.MapToType(type, options);
+                    // check if this is property with a defined type in the name
+                    if (TrySplitNameAndType(keyValuePair.Name, splitChar, out (string key, string typeName) inlinedName))
+                    {
+                        var type = ResolveType(inlinedName.typeName, options);
+                        result[keyParser(inlinedName.key)] = keyValuePair.Value.MapToType(type, options);
+                    }
+                    else
+                    {
+                        // take a best guess at mapping the object
+                        result[keyParser(keyValuePair.Name)] = keyValuePair.Value.MapValue(options);
+                    }
                 }
                 else
                 {
-                    // take a best guess at mapping the object
-                    result[keyValuePair.Name] = keyValuePair.Value.MapValue(options);
+                    result.Add(keyParser(keyValuePair.Name), keyValuePair.Value.MapValueTo(valueType, options));
                 }
             }
 
@@ -291,56 +311,7 @@ namespace gg.json
                     throw new JsonConfigException($"Unknown or unhandled element of type: {element.ValueKind}");
             }
         }
-
-        /// <summary>
-        /// Map an (array) element to a collection of the given target type.
-        /// </summary>
-        /// <param name="element"></param>
-        /// <param name="targetType"></param>
-        /// <param name="options"></param>
-        /// <returns></returns>
-        /// <exception cref="JsonConfigException"></exception>
-        private static object MapToCollection(this JsonElement element, Type targetType, Options options = null)
-        {
-            
-            // no targettype or we're working with an array, try to build an array
-            if (targetType == null || targetType.IsArray)
-            {
-                return element.MapToArray(targetType.GetElementType(), options);
-            }
-            
-            // if it's a list, build a list (generic or 'plain' (?)).
-            if (ImplementsCollection(targetType))
-            {
-                if (targetType.IsGenericType)
-                {
-                    var genericArgs = targetType.GetGenericArguments()[0];
-                    var genericType = targetType.GetGenericTypeDefinition();
-                    var instanceType = genericType.MakeGenericType(genericArgs);
-                    var args = element.MapToArray(genericArgs, options);
-                    return Activator.CreateInstance(instanceType, args);
-                }
-                else
-                {
-                    Array arrayValues = element.MapToObjectArray(options);
-                    return Activator.CreateInstance(targetType, arrayValues);
-                }
-            }
-
-            throw new JsonConfigException($"Unknown or unhandled target type: {targetType.Name}");
-        }
-
-        /// <summary>
-        /// Checks if the type t implements ICollection or ICollection<>
-        /// </summary>
-        /// <param name="t"></param>
-        /// <returns></returns>
-        private static bool ImplementsCollection(Type t)
-        {
-            return typeof(ICollection).IsAssignableFrom(t)
-                || t.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ICollection<>));
-        }
-
+        
         /// <summary>
         /// Maps the element to its valuekind
         /// </summary>
@@ -503,7 +474,6 @@ namespace gg.json
             }
         }
 
-
         /// <summary>
         /// Attempts to map an element to an object if a property with the 'TypeTag' is defined.
         /// If not the element will be mapped to a dictionary.
@@ -523,7 +493,7 @@ namespace gg.json
                 return SetObjectProperties(Activator.CreateInstance(type), element.EnumerateObject(), options);
             }
             // else treat it as a dictionary
-            return element.MapToDictionary(options);
+            return element.MapToDictionary<string, object>(options);
         }
 
         /// <summary>
@@ -559,6 +529,78 @@ namespace gg.json
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// Returns a function which can parse a dictionary key (string) to a targetTypr
+        /// </summary>
+        /// <param name="target"></param>
+        /// <returns></returns>
+        /// <exception cref="JsonConfigException"></exception>
+        private static Func<string, object> GetKeyParser(Type target)
+        {
+            if (target == typeof(string))
+            {
+                return (str) => str;
+            }
+            else if (target == typeof(int))
+            {
+                return (str) => int.Parse(str);
+            }
+            else if (target == typeof(long))
+            {
+                return (str) => long.Parse(str); ;
+            }
+
+            throw new JsonConfigException($"Cannot parse key of type {target.Name}.");
+        }
+
+        /// <summary>
+        /// Map an (array) element to a collection of the given target type.
+        /// </summary>
+        /// <param name="element"></param>
+        /// <param name="targetType"></param>
+        /// <param name="options"></param>
+        /// <returns></returns>
+        /// <exception cref="JsonConfigException"></exception>
+        private static object MapToCollection(this JsonElement element, Type targetType, Options options = null)
+        {
+            // no targettype or we're working with an array, try to build an array
+            if (targetType == null || targetType.IsArray)
+            {
+                return element.MapToArray(targetType.GetElementType(), options);
+            }
+
+            // if it's a list, build a list (generic or 'plain' (?)).
+            if (ImplementsCollection(targetType))
+            {
+                if (targetType.IsGenericType)
+                {
+                    var genericArgs = targetType.GetGenericArguments()[0];
+                    var genericType = targetType.GetGenericTypeDefinition();
+                    var instanceType = genericType.MakeGenericType(genericArgs);
+                    var args = element.MapToArray(genericArgs, options);
+                    return Activator.CreateInstance(instanceType, args);
+                }
+                else
+                {
+                    Array arrayValues = element.MapToObjectArray(options);
+                    return Activator.CreateInstance(targetType, arrayValues);
+                }
+            }
+
+            throw new JsonConfigException($"Unknown or unhandled target type: {targetType.Name}");
+        }
+
+        /// <summary>
+        /// Checks if the type t implements ICollection or ICollection<>
+        /// </summary>
+        /// <param name="t"></param>
+        /// <returns></returns>
+        private static bool ImplementsCollection(Type t)
+        {
+            return typeof(ICollection).IsAssignableFrom(t)
+                || t.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ICollection<>));
         }
 
         #region -- Contracts ------------------------------------------------------------------------------------------

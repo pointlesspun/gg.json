@@ -35,6 +35,14 @@ namespace gg.json.tests
             public ArrayList arrayList;
         }
 
+        class DictionaryObj
+        {
+            public Dictionary<string, int> StrIntDictionary { get; set; }
+
+            public Dictionary<int, object> intObjDictionary;
+        }
+
+
         private static readonly JsonConfig.Options TestOptions = new JsonConfig.Options()
         {
             Aliases = new Dictionary<string, Type>()
@@ -165,7 +173,7 @@ namespace gg.json.tests
             var jsonString = builder.ToString();
 
             var document = JsonSerializer.Deserialize<JsonElement>(jsonString);
-            var obj = document.MapToDictionary();
+            var obj = document.MapToDictionary<string, object>();
 
             Assert.IsTrue(obj != null);
             Assert.IsTrue(obj.Count == 2);
@@ -245,6 +253,45 @@ namespace gg.json.tests
             Assert.IsTrue(list.Contains(1));
             Assert.IsTrue(list.Contains(2));
             Assert.IsTrue(list.Contains(3));
+        }
+
+        [TestMethod]
+        public void DeserializeIntIntDictionaryTest()
+        {
+            var outerJsonString = $"{{\"1\": 23, \"2\": 42}}";
+            var document = JsonSerializer.Deserialize<JsonElement>(outerJsonString);
+            var dictionary = JsonConfig.MapToDictionary<int, int>(document);
+
+            Assert.IsTrue(dictionary != null);
+            Assert.IsTrue(dictionary.Count == 2);
+            Assert.IsTrue(dictionary[1] == 23);
+            Assert.IsTrue(dictionary[2] == 42);
+        }
+
+        [TestMethod]
+        public void DeserializeStringObjectDictionaryTest()
+        {
+            var outerJsonString = $"{{\"foo\": {{ \"GenericIntList\": [1,2,3], \"arrayList\": [1, \"foo\", [1,2,3]] }}}}";
+            var document = JsonSerializer.Deserialize<JsonElement>(outerJsonString);
+            var dictionary = JsonConfig.MapToDictionary<string, TestListObj>(document);
+
+            Assert.IsTrue(dictionary != null);
+            Assert.IsTrue(dictionary.Count == 1);
+            Assert.IsTrue(dictionary["foo"] != null);
+            Assert.IsTrue(dictionary["foo"].GenericIntList.Count == 3);
+            Assert.IsTrue(dictionary["foo"].arrayList.Count == 3);
+        }
+
+        [TestMethod]
+        public void DeserializeNestedDictionaryObjectTest()
+        {
+            var outerJsonString = $"{{ \"intObjDictionary\": {{ \"1\": 1, \"2\": \"foo\"}}, \"StrIntDictionary\": {{\"a\": 1, \"b\": 2 }} }}";
+            var document = JsonSerializer.Deserialize<JsonElement>(outerJsonString);
+            var dictionary = JsonConfig.MapToType<DictionaryObj>(document);
+
+            Assert.IsTrue(dictionary != null);
+            Assert.IsTrue(dictionary.intObjDictionary.Count == 2);
+            Assert.IsTrue(dictionary.StrIntDictionary.Count == 2);
         }
     }
 }
